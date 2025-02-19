@@ -6,7 +6,7 @@ import (
 )
 
 // Bearer 헤더에서 토큰 추출
-func ExtractTokenFromBearerString(bearerString string) (string, error) {
+func extractTokenFromBearerString(bearerString string) (string, error) {
 	if len(bearerString) == 0 {
 		return "", errors.New("authorization header is empty")
 	}
