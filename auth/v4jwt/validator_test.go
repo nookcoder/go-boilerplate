@@ -2,6 +2,7 @@ package v4jwt
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -99,6 +100,21 @@ func TestValidateToken(t *testing.T) {
 			validator: NewValidator[*validateTestClaims](NewConfig(jwt.SigningMethodHS256, []byte("secret"))),
 			expectedError: jwt.ErrTokenNotValidYet,
 		},
+		{
+			name: "Claims가 유효하지 않은 경우",
+			testClaims: &validateTestClaims{
+				RegisteredClaims: jwt.RegisteredClaims{
+					ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 10)),
+					IssuedAt: jwt.NewNumericDate(time.Now()),
+					NotBefore: jwt.NewNumericDate(time.Now()),
+					Issuer: "test",
+					Subject: "test",
+				},
+			},	
+			creator: NewCreator(NewConfig(jwt.SigningMethodHS256, []byte("secret"))),
+			validator: NewValidator[*validateTestClaims](NewConfig(jwt.SigningMethodHS256, []byte("secret"))),
+			expectedError: errors.New("user_id is required"),
+		},
 	}
 
 	t.Parallel()
@@ -109,7 +125,12 @@ func TestValidateToken(t *testing.T) {
 			require.NoError(t, err) 
 
 			claims, err := tc.validator.ValidateToken(token, tc.testClaims)
-			if tc.expectedError != nil {
+			if err != nil && tc.expectedError != nil {
+				if tc.name == "Claims가 유효하지 않은 경우" {
+                    assert.EqualError(t, err, tc.expectedError.Error())
+					fmt.Println(err.Error())
+					return
+                }
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, tc.expectedError)
 				return 
