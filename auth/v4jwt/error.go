@@ -40,6 +40,10 @@ var (
 	ErrNotEdPublicKey  = jwt.ErrNotEdPublicKey
 )
 
+var (
+	ErrJwtMissing = errors.New("missing jwt token")
+)
+
 type ErrorHandler func(w http.ResponseWriter, r *http.Request, err error) 
 
 func DefaultErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
@@ -55,6 +59,9 @@ func DefaultErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.Is(err, jwt.ErrTokenMalformed):
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte(`{"message": "invalid token format"}`))
+	case errors.Is(err, ErrJwtMissing):
+		w.WriteHeader(http.StatusBadGateway) 
+		_, _ = w.Write([]byte(`{"message": "missing jwt token"}`))
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(`{"message": "internal server error in jwt"}`))
